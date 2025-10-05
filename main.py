@@ -1,6 +1,6 @@
 #created: 2025/10/04 12:05:04
-#last-modified: 2025/10/05 23:26:20
-#last-modified: 2025/10/05 23:26:20
+#last-modified: 2025/10/05 23:28:36
+#last-modified: 2025/10/05 23:28:36
 #by kaldor31
 
 import os
@@ -93,7 +93,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     raw_text = update.message.text.strip()
     user_text = clean_query(raw_text)
     user_id = update.message.from_user.id
-    log_request(logger, user_id, user_text)
+    log_request(logger, user_id, raw_text, user_text)
     
     if not user_text:
         await update.message.reply_text("Пожалуйста, отправьте текстовый запрос.")
