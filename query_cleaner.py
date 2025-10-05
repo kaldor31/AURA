@@ -1,5 +1,5 @@
-# query_cleaner.py
-# created: 2025/10/06
+# created: 2025/10/05 23:23:49
+#last-modified: 2025/10/06 00:08:24
 # by kaldor31
 
 import re
