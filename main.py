@@ -1,11 +1,19 @@
+#created: 2025/10/04 12:05:04
+#last-modified: 2025/10/05 21:29:20
+#by kaldor31
+
 import os
 import asyncio
+import logging
 from typing import List, Dict, Any
+from logging.handlers import RotatingFileHandler
 import aiohttp
 from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 from dotenv import load_dotenv
+from smalltalk_handler import detect_smalltalk
+from logger_system import setup_logger, log_request, log_response, log_error
 
 load_dotenv()
 
@@ -17,7 +25,11 @@ GOOGLE_CSE_ID = os.getenv("GOOGLE_CSE_ID")
 
 GOOGLE_SEARCH_URL = "https://www.googleapis.com/customsearch/v1"
 
-# ---------- Google CSE Web Search Feature ----------
+CHANNEL_ID = os.getenv("CHANNEL_ID")
+
+logger = None # Defining logger as global in main function
+
+# Google CSE Web Search Feature
 async def search_web_google(query: str, limit: int = 3) -> List[Dict[str, Any]]:
     """
     Searches through the Google Custom Search API and returns a list of results:
@@ -46,7 +58,7 @@ async def search_web_google(query: str, limit: int = 3) -> List[Dict[str, Any]]:
         })
     return results
 
-# ---------- Formatting a response ----------
+# Formatting a response
 def format_answer(query: str, results: List[Dict[str, Any]]) -> str:
     if not results:
         return "К сожалению, по вашему запросу ничего не найдено."
@@ -63,7 +75,7 @@ def format_answer(query: str, results: List[Dict[str, Any]]) -> str:
     )
     return message
 
-# ---------- Telegram handlers ----------
+# Handlers 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Здравствуй! Задай мне вопрос о женской физиологии.\n"
@@ -72,32 +84,46 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "/start — приветствие\n"
-        "Просто напиши вопрос, например: 'Что такое квантовый компьютер?'"
+        "Просто напиши вопрос, например: 'n?'"
     )
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_text = update.message.text.strip()
+    user_id = update.message.from_user.id
+    log_request(logger, user_id, user_text)
+    
     if not user_text:
         await update.message.reply_text("Пожалуйста, отправьте текстовый запрос.")
         return
 
+    # Check for domestic stupid questions (smalltalk handler)
+    smalltalk_reply = detect_smalltalk(user_text)
+    if smalltalk_reply:
+        await update.message.reply_text(smalltalk_reply)
+        log_response(logger, user_id, smalltalk_reply)
+        return
+    
     await update.message.chat.send_action(action="typing")
 
     try:
         results = await search_web_google(user_text, limit=4)
         answer = format_answer(user_text, results)
         await update.message.reply_text(answer, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=False)
+        log_response(logger, user_id, answer)
     except Exception as e:
-        print("Ошибка при поиске:", e)
+        print("Error has occured while searching:", e)
+        log_error(logger, e)
         await update.message.reply_text("Произошла ошибка при поиске. Попробуйте позже.")
 
-# ---------- Main Function ----------
+# Main Function
 def main():
+    global logger
     if not TELEGRAM_TOKEN:
         raise RuntimeError("TELEGRAM_TOKEN not installed!")
     if not GOOGLE_API_KEY or not GOOGLE_CSE_ID:
-        raise RuntimeError("GOOGLE_API_KEY или GOOGLE_CSE_ID not installedы!")
+        raise RuntimeError("GOOGLE_API_KEY or GOOGLE_CSE_ID not installed!")
+
+    logger = setup_logger()
 
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
