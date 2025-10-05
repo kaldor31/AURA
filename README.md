@@ -1,5 +1,11 @@
 # AURA
+<<<<<<< HEAD
 ## Usage
+=======
+-
+## Usage
+-
+>>>>>>> 7295320 (added smalltalk_handler system and basic logger system)
 ### Annotation 
 *main.py* - Main functions 
 *smalltalk_handler.py* - Module for processing stupid domestic questions

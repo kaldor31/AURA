@@ -1,5 +1,6 @@
 #created: 2025/10/04 12:05:04
-#last-modified: 2025/10/05 21:44:29
+#last-modified: 2025/10/05 23:26:20
+#last-modified: 2025/10/05 23:26:20
 #by kaldor31
 
 import os
@@ -14,6 +15,7 @@ from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, Messa
 from dotenv import load_dotenv
 from smalltalk_handler import detect_smalltalk
 from logger_system import setup_logger, log_request, log_response, log_error
+from query_cleaner import clean_query
 
 load_dotenv()
 
@@ -88,7 +90,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_text = update.message.text.strip()
+    raw_text = update.message.text.strip()
+    user_text = clean_query(raw_text)
     user_id = update.message.from_user.id
     log_request(logger, user_id, user_text)
     
@@ -111,6 +114,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(answer, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=False)
         log_response(logger, user_id, answer)
     except Exception as e:
+        print("Error occured while searching:", e)
         print("Error has occured while searching:", e)
         log_error(logger, e)
         await update.message.reply_text("Произошла ошибка при поиске. Попробуйте позже.")

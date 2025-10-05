@@ -1,5 +1,5 @@
 #created: 2025/10/05 21:37:44
-#last-modified: 2025/10/05 21:42:11
+#last-modified: 2025/10/05 23:25:16
 #by kaldor31
 
 import logging
@@ -55,9 +55,9 @@ def setup_logger(name: str = "telegram_bot") -> logging.Logger:
     return logger
 
 
-def log_request(logger: logging.Logger, user_id: int, text: str):
+def log_request(logger: logging.Logger, user_id: int, raw_text: str, text: str):
     """Logs the user's incoming message"""
-    logger.info(f"User {user_id} -> {text}")
+    logger.info(f"User {user_id}: {raw_text} -> {text}")
 
 
 def log_response(logger: logging.Logger, user_id: int, response: str):
